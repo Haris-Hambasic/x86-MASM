@@ -5,18 +5,17 @@ TITLE Program Template     (template.asm)
 ; OSU email address: hambasih@oregonstate.edu
 ; Course number/section:   CS271 Section 401
 ; Project Number: 4               Due Date: 15 November 2021
-; Description: This file is provided as a template from which you may work
-;              when developing assembly projects in CS271.
+; Description: Program asks user for input between 1-200 --> [1...200]
+;				If user enters number between 1-200 then that many primes will be displayed up to an unspecified "n" value
+;				If user enters number outside range of 1-200 then the user will be prompted again to enter a number in the range 1-200
 
 INCLUDE Irvine32.inc
 
-; (insert macro definitions here)
-
-; (insert constant definitions here)
+MIN_NUMBER							=		1
+MAX_NUMBER							=		200
 
 .data
 
-; (insert variable definitions here
 programmersName						BYTE	"Haris Hambasic", 0
 programTitle						BYTE	"Project 4", 0
 programIntroduction					BYTE	"Welcome! This progrm allows you to enter a number for which you want to view all primes up to it!", 0
@@ -31,11 +30,6 @@ primeWasFound						WORD	0 ; 0=FALSE, 1=TRUE
 numberOfPrimesToDisplayIsLess		BYTE	"The integer you entered is less than 1. The value must must be greater than or equal to 1. Please enter another number now: ", 0
 numberOfPrimesToDisplayIsGreater	BYTE	"The integer you entered is greater than 200. The value must be less than or equal to 200. Please enter another number now: ", 0
 
-minNumber							WORD	1
-maxNumber							WORD	200
-
-here_ BYTE "HERE-->", 0
-
 .code
 main PROC
 	CALL	introduction
@@ -43,12 +37,22 @@ main PROC
 	CALL	showPrimes
 	CALL	farewell
 
-	Invoke ExitProcess,0	; exit to operating system
+	Invoke ExitProcess,0
 main ENDP
 
-; (insert additional procedures here)
-
 introduction PROC
+	; --------------------------------------------------------------------------------- 
+	; Name: introduction 
+	;  
+	; Introduces the program by printing the programmer's name, the program title,
+	;		and the program introduction statement 
+	; 
+	; Preconditions: values at memory locations programmersName, programTitle, and programIntroduction
+	; 
+	; Postconditions: none. 
+	; 
+	; returns: no return value
+	; ---------------------------------------------------------------------------------
 	MOV		EDX, OFFSET programmersName
 	CALL	WriteString
 	CALL	CrLf
@@ -67,6 +71,19 @@ introduction PROC
 introduction ENDP
 
 getUserData PROC
+	; --------------------------------------------------------------------------------- 
+	; Name: getUserData 
+	;  
+	; Gets the user's input data, specifically the number of primes to display
+	; 
+	; Preconditions: none
+	; 
+	; Postconditions:
+	;		- memory location "numberOfPrimesToDisplay" is populated with the number
+	;			of prime numbers to display
+	; 
+	; returns: no return value
+	; ---------------------------------------------------------------------------------
 	_setNumberOfPrimesToDisplay:
 		MOV		EDX, OFFSET promptNumberOfPrimesToDisplay
 		CALL	WriteString
@@ -79,11 +96,26 @@ getUserData PROC
 getUserData ENDP
 
 validate PROC
+	; --------------------------------------------------------------------------------- 
+	; Name: validate 
+	;  
+	; Validates the user's input
+	; 
+	; Preconditions:
+	;		- values at memory locations:
+	;			- MIN_NUMBER
+	;			- MAX_NUMBER
+	; 
+	; Postconditions:
+	;		- validated user input at memory location "numberOfPrimesToDisplay"
+	; 
+	; returns: no return value 
+	; ---------------------------------------------------------------------------------
 	_validateNumberOfPrimesToDisplay:
-		CMP		numberOfPrimesToDisplay, 1
+		CMP		numberOfPrimesToDisplay, OFFSET MIN_NUMBER
 		JL		_isLess?
 
-		CMP		numberOfPrimesToDisplay, 200
+		CMP		numberOfPrimesToDisplay, OFFSET MAX_NUMBER
 		JG		_isGreater?
 
 		JMP		_endValidation
@@ -108,8 +140,25 @@ validate PROC
 validate ENDP
 
 showPrimes PROC
-	; Display the first two primes, after we check how many primes the user want displayed
+	; --------------------------------------------------------------------------------- 
+	; Name: showPrimes 
+	;  
+	; Prints to the console a prime number if the current number is a prime.
+	; 
+	; Preconditions:
+	;		- "numberOfPrimesToDisplay" to use as the counter for loop
+	; 
+	; Postconditions: none... this procedure only prints the number if is prime and
+	;					keeps track of the loop constraints
+	; 
+	; returns: no return value
+	; ---------------------------------------------------------------------------------
 
+
+	; -----------------------------------
+	; Checks if the user want only to
+	;	to print one prime number
+	; -----------------------------------
 	CMP		numberOfPrimesToDisplay, 1
 	JE		_displayOnePrime
 
@@ -124,28 +173,32 @@ showPrimes PROC
 		CALL	farewell
 
 	_main:
-	MOV		EAX, 2
-	CALL	WriteInt
+		MOV		EAX, 2
+		CALL	WriteInt
 
-	; initialize running total, first number, and loop control
-	MOV		EAX, 3						; EAX will hold the current number being tested
-	MOV		EBX, 2						; The current divisor
-	SUB		numberOfPrimesToDisplay, 1
-	MOV		ECX, numberOfPrimesToDisplay	; ECX will hold the total number of primes to compute
+		MOV		EAX, 3							; EAX will hold the current number being tested
+		MOV		EBX, 2							; The current divisor
+		SUB		numberOfPrimesToDisplay, 1
+		MOV		ECX, numberOfPrimesToDisplay	; ECX will hold the total number of primes to compute
 
 	_primeLoop:
 		PUSH	ECX
 		PUSH	EAX
 		
-		CALL	isPrime ; check if current number is prime
+		CALL	isPrime
 
 		CMP		primeWasFound, 1
 		JE		_continueToNextIteration
 
-		_adjustECX:  ; because current number is not prime
+
+		; -------------------------- 
+		; Adds 1 to ECX before the next loop decrements
+		;	ECX causing an incorrect counter
+		; -------------------------- 
+		_adjustECX:
 			POP		EAX
 			POP		ECX
-			ADD		ECX, 1
+			ADD		ECX, 1						;  Adjust ECX so that when the next loop iteration decrements ECX, ECX will store the correct value
 			INC		EAX
 			MOV		EBX, 2
 			LOOP	_primeLoop
@@ -156,18 +209,31 @@ showPrimes PROC
 			POP		EAX
 			POP		ECX
 			call	CrLf
-			CALL	WriteInt ;  write the prime number
+			CALL	WriteInt
 			MOV		primeWasFound, 0
 			INC		EAX
 			MOV		EBX, 2
 			LOOP	_primeLoop
-
 	_endShowPrimes:
 
 	RET
 showPrimes ENDP
 
 isPrime PROC
+	; --------------------------------------------------------------------------------- 
+	; Name: isPrime 
+	;  
+	; Determines if the number is a prime
+	; 
+	; Preconditions: the number to check, in register EAX
+	; 
+	; Postconditions:
+	;		- memory location "primeWasFound" is set (1) if the current number is
+	;			prime and subsequently procedure "showPrimes" prints number to console
+	;			otherwise number is not prime and next number is loaded
+	; 
+	; returns: no return value
+	; ---------------------------------------------------------------------------------
 	DEC		EAX
 	DEC		EAX
 	MOV		ECX, EAX
@@ -188,7 +254,7 @@ isPrime PROC
 	LOOP	_primeInnerLoop
 
 	_jumpEarly:
-	MOV		primeWasFound, 1
+		MOV		primeWasFound, 1
 	
 	_endIsPrime:
 
@@ -196,6 +262,17 @@ isPrime PROC
 isPrime ENDP
 
 farewell PROC
+	; --------------------------------------------------------------------------------- 
+	; Name: farewell 
+	;  
+	; Displays a farewell message to the user
+	; 
+	; Preconditions: none
+	; 
+	; Postconditions: none
+	; 
+	; returns: no return value
+	; ---------------------------------------------------------------------------------
 	CALL	CrLf
 	CALL	CrLf
 	CALL	CrLf

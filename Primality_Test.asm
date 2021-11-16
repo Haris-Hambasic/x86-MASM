@@ -1,10 +1,5 @@
 TITLE Program Template     (template.asm)
 
-; Author: Haris Hambasic
-; Last Modified: 14 November 2021
-; OSU email address: hambasih@oregonstate.edu
-; Course number/section:   CS271 Section 401
-; Project Number: 4               Due Date: 15 November 2021
 ; Description: Program asks user for input between 1-200 --> [1...200]
 ;				If user enters number between 1-200 then that many primes will be displayed up to an unspecified "n" value
 ;				If user enters number outside range of 1-200 then the user will be prompted again to enter a number in the range 1-200
